@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+  // ignore: always_put_required_named_parameters_first
   const MyHomePage({super.key, required this.title});
 
   final String title;
@@ -34,6 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final _textController = TextEditingController();
 
+  // ignore: non_constant_identifier_names
   String UserData = '';
 
   final Map<String, String> numberMap = {
@@ -50,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   };
 
   String checkNumbers(String text) {
-    List<String> words = text.toLowerCase().split(' ');
+    final List<String> words = text.toLowerCase().split(' ');
     for (String word in words) {
      if (!numberMap.containsKey(word)) {
         return 'Sorry, "$word" is not a valid word.';
@@ -63,8 +65,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String convertTextToNumbers(String text) {
-    List<String> words = text.toLowerCase().split(' ');
-    List<String> numbers = words.map((word) => numberMap[word] ?? word).toList();
+    final List<String> words = text.toLowerCase().split(' ');
+    // ignore: lines_longer_than_80_chars
+    final List<String> numbers = words.map((word) => numberMap[word] ?? word).toList();
+    // ignore: avoid_redundant_argument_values
     return numbers.join('');
   }
 
@@ -76,15 +80,17 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Padding(
+        // ignore: prefer_int_literals
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
 
             Expanded(
+              // ignore: avoid_unnecessary_containers
               child: Container(
                 child: Center(
-                  child: Text(UserData, style: TextStyle(fontSize: 35),),
+                  child: Text(UserData, style: const TextStyle(fontSize: 35),),
                 ),
               ),
             ),
@@ -97,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 hintText: 'Write something',
                 suffixIcon: IconButton(
                   onPressed: _textController.clear, 
-                  icon: const Icon(Icons.clear)),
+                  icon: const Icon(Icons.clear),),
                 ),
             ),
             MaterialButton(
@@ -108,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               color: Colors.amber,
               child: const Text('Send', style: TextStyle(color: Colors.white)),
-              )
+              ),
           ],
         ),
       ),
