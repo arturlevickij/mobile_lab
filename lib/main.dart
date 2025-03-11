@@ -22,8 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  // ignore: always_put_required_named_parameters_first
-  const MyHomePage({super.key, required this.title});
+
+  const MyHomePage({required this.title, super.key});
 
   final String title;
 
@@ -35,8 +35,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final _textController = TextEditingController();
 
-  // ignore: non_constant_identifier_names
-  String UserData = '';
+
+  String userData = '';
 
   final Map<String, String> numberMap = {
     'zero': '0',
@@ -65,11 +65,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String convertTextToNumbers(String text) {
-    final List<String> words = text.toLowerCase().split(' ');
-    // ignore: lines_longer_than_80_chars
-    final List<String> numbers = words.map((word) => numberMap[word] ?? word).toList();
-    // ignore: avoid_redundant_argument_values
-    return numbers.join('');
+    final List<String> words = 
+    text.toLowerCase().split(' ');
+    final List<String> numbers = words.map(
+      (word) => numberMap[word] ?? word
+      ,).toList();
+    return numbers.join();
   }
 
   @override
@@ -80,18 +81,14 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Padding(
-        // ignore: prefer_int_literals
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
 
             Expanded(
-              // ignore: avoid_unnecessary_containers
-              child: Container(
-                child: Center(
-                  child: Text(UserData, style: const TextStyle(fontSize: 35),),
-                ),
+              child: Center(
+                child: Text(userData, style: const TextStyle(fontSize: 35),),
               ),
             ),
 
@@ -109,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
             MaterialButton(
               onPressed: () {
                 setState(() {
-                  UserData = checkNumbers(_textController.text);
+                  userData = checkNumbers(_textController.text);
                 });
               },
               color: Colors.amber,
