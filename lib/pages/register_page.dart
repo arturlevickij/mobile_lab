@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:my_project/widgets/background_widget.dart';
 import 'package:my_project/widgets/custom_button.dart';
-import 'package:my_project/widgets/custom_input.dart';
-import 'package:my_project/widgets/menu_button_widget.dart';
+import 'package:my_project/widgets/validated_input.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,68 +11,87 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pop(context);
-    }
+  String? emailError;
+  String? passwordError;
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  bool _validateInputs() {
+    setState(() {
+      emailError = 
+      ValidatedTextField.validateEmail(emailController.text.trim());
+      passwordError = 
+      ValidatedTextField.validatePassword(passwordController.text.trim());
+    });
+
+    return emailError == null && passwordError == null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register'),
-        leading: const MenuButtonWidget(),
-        ),
-      body: BackgroundWidget(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomInput(
-                  label: 'Email',
-                  controller: emailController,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter an email' : null,
-                ),
-                const SizedBox(height: 10),
-                CustomInput(
-                  label: 'Password',
-                  isPassword: true,
-                  controller: passwordController,
-                  validator: (value) =>
-                      value!.length < 6 ? 'Password too short' : null,
-                ),
-                const SizedBox(height: 10),
-                CustomInput(
-                  label: 'Confirm Password',
-                  isPassword: true,
-                  controller: confirmPasswordController,
-                  validator: (value) {
-                    if (value!.isEmpty) return 'Please confirm your password';
-                    if (value != passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                CustomButton(
-                  text: 'Register',
-                  onPressed: _submitForm,
-                ),
-                const SizedBox(height: 10),
-              ],
+      appBar: AppBar(title: const Text('Реєстрація')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Ім’я',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            ValidatedTextField(
+              label: 'Email',
+              controller: emailController,
+              errorText: emailError,
+            ),
+            const SizedBox(height: 16),
+            ValidatedTextField(
+              label: 'Пароль',
+              controller: passwordController,
+              isPassword: true,
+              errorText: passwordError,
+            ),
+            const SizedBox(height: 16),
+            CustomButton(
+              text: 'Зареєструватися',
+              onPressed: () async {
+                if (!_validateInputs()) return;
+
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('name', nameController.text.trim());
+                await prefs.setString('email', emailController.text.trim());
+                await prefs.setString(
+                  'password', passwordController.text.trim(),
+                  );
+                await prefs.setBool('isLoggedIn', true);
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Реєстрація успішна! Тепер увійдіть.'),
+                  ),
+                );
+
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
+          ],
         ),
       ),
     );

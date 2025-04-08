@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:my_project/widgets/background_widget.dart';
-import 'package:my_project/widgets/menu_button_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,10 +16,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Smart Lamp'),
-        leading: const MenuButtonWidget(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () => Navigator.pushNamed(context, '/profile'),
+          ),
+        ],
       ),
-      body: BackgroundWidget(
+       body: BackgroundWidget(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
