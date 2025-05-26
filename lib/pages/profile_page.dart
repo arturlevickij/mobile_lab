@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:my_project/widgets/custom_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -47,20 +46,33 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  Future<void> _deleteProfile(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(key);
-    _loadProfiles();
+  Future<void> _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Вийти з акаунту'),
+        content: const Text('Ви впевнені, що хочете вийти?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Скасувати'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Вийти'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', false);
+
+      if (!context.mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    }
   }
-
-Future<void> _logout() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setBool('isLoggedIn', false);
-  
-  if (!mounted) return;
-  Navigator.pushReplacementNamed(context, '/');
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -97,12 +109,12 @@ Future<void> _logout() async {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          CustomButton(
-            text: 'Вийти',
-            onPressed: _logout,
-          ),
-        ],
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () => _logout(context),
+          child: const Text('Вийти з акаунту'),
+        ),
+       ],
       ),
     );
   }

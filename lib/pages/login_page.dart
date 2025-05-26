@@ -92,7 +92,7 @@ Future<void> _attemptLogin() async {
             if (loginError != null) ...[
               const SizedBox(height: 8),
               Text(
-                loginError!,
+                loginError ?? '',
                 style: const TextStyle(color: Colors.red),
               ),
             ],
