@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_project/pages/home_page.dart';
 import 'package:my_project/pages/login_page.dart';
 import 'package:my_project/pages/profile_page.dart';
+import 'package:my_project/pages/qr_scan_page.dart';
 import 'package:my_project/pages/register_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,6 +33,7 @@ class SmartLampApp extends StatelessWidget {
         '/register': (context) => const RegisterPage(),
         '/home': (context) => const HomePage(),
         '/profile': (context) => const ProfilePage(),
+        '/qr': (context) => const QRScanPage(),
       },
     );
   }

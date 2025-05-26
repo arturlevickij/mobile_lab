@@ -32,27 +32,49 @@ void _setupConnectivity() async {
   if (!mounted) return;
   setState(() {});
 
+  bool wasDisconnectedOnce = false;
+
   _connectivityService.connectivityStream.listen((status) {
     if (!mounted) return;
+
+    final currentlyConnected = status != ConnectivityResult.none;
+
     setState(() {
-      isConnected = status != ConnectivityResult.none;
+      isConnected = currentlyConnected;
     });
-    if (!isConnected) {
+
+    if (!currentlyConnected && !wasDisconnectedOnce) {
+      wasDisconnectedOnce = true;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Втрачено підключення до Інтернету')),
       );
+    }
+
+    if (currentlyConnected) {
+      wasDisconnectedOnce = false;
     }
   });
 }
 
 
-  void _connectToMqtt() async {
-    await _mqttService.connect((data) {
-      setState(() {
-        power = '$data W';
-      });
+
+void _connectToMqtt() async {
+  await _mqttService.connect((data) {
+    final parsedPower = double.tryParse(data);
+    if (parsedPower != null && parsedPower < 100) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text
+          ('УВАГА: Потужність нижча за 100 W ($parsedPower W)'),),
+        );
+      }
+    }
+
+    setState(() {
+      power = '$data W';
     });
-  }
+  });
+}
 
   @override
   void dispose() {
@@ -78,11 +100,20 @@ void _setupConnectivity() async {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            Text(
-              isConnected ? 'Підключено до Інтернету' : 'Немає Інтернету',
-              style: TextStyle(
-                color: isConnected ? Colors.green : Colors.red,
-                fontSize: 16,
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: isConnected ? Colors.green.shade100 :
+                 Colors.red.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                isConnected ? 'Підключено до Інтернету' : 'Немає Інтернету',
+                style: TextStyle(
+                  color: isConnected ? Colors.green : Colors.red,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -114,6 +145,13 @@ void _setupConnectivity() async {
                 if (!isConnected) return;
                 setState(() => lampColor = value);
               },
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/qr');
+              },
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Сканувати QR-код'),
             ),
           ],
         ),
