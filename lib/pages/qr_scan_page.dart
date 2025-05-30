@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:my_project/pages/usb_serial_service.dart';
+import 'package:my_project/services/usb_serial_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final usbService = UsbSerialService();
