@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:my_project/cubit/auth_cubit.dart';
 import 'package:my_project/widgets/custom_button.dart';
 import 'package:my_project/widgets/validated_input.dart';
@@ -13,12 +16,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
+  final nameController     = TextEditingController();
+  final emailController    = TextEditingController();
   final passwordController = TextEditingController();
 
   String? emailError;
   String? passwordError;
+
+  final _secureStorage = const FlutterSecureStorage();
 
   @override
   void dispose() {
@@ -30,8 +35,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _validateInputs() {
     setState(() {
-      emailError =
-          ValidatedTextField.validateEmail(emailController.text.trim());
+      emailError = ValidatedTextField.validateEmail
+      (emailController.text.trim());
       passwordError =
           ValidatedTextField.validatePassword(passwordController.text.trim());
     });
@@ -41,22 +46,31 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     if (!_validateInputs()) return;
 
-    final authCubit   = context.read<AuthCubit>();
-    final navigator   = Navigator.of(context);
-    final messenger   = ScaffoldMessenger.of(context);
+    try {
+      final authCubit = context.read<AuthCubit>();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('name',     nameController.text.trim());
-    await prefs.setString('email',    emailController.text.trim());
-    await prefs.setString('password', passwordController.text.trim());
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('name',  nameController.text.trim());
+      await prefs.setString('email', emailController.text.trim());
 
-    await authCubit.logIn();
+      final password     = passwordController.text.trim();
+      final passwordHash = sha256.convert(utf8.encode(password)).toString();
+      await _secureStorage.write(key: 'password_hash', value: passwordHash);
 
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Реєстрація успішна!')),
-    );
+      await authCubit.logIn();
 
-    navigator.pushReplacementNamed('/');
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Реєстрація успішна!')),
+      );
+      Navigator.of(context).pushReplacementNamed('/');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Помилка реєстрації: $e')),
+      );
+    }
   }
 
   @override
