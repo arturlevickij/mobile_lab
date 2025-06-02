@@ -14,10 +14,18 @@ class HomePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
-            onPressed: () {
-              Navigator.pushNamed(context, '/qr');
+            onPressed: () async {
+              final result = await Navigator.pushNamed(context, '/qr');
+              if (context.mounted && result != null) {
+                // лог або будь-яка інша обробка
+                debugPrint('[HomePage] QR результат: $result');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('QR: $result')),
+                );
+              }
             },
           ),
+
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
@@ -27,9 +35,19 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await context.read<AuthCubit>().logOut();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, '/');
+              try {
+                await context.read<AuthCubit>().logOut();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Не вдалося вийти з облікового запису'),
+                    ),
+                  );
+                }
               }
             },
           ),

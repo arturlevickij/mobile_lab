@@ -15,7 +15,6 @@ class _ProfilePageState extends State<ProfilePage> {
   String? email;
   String? password;
   bool _isPasswordVisible = false;
-  List<Map<String, String>> profiles = [];
 
   @override
   void initState() {
@@ -25,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       name = prefs.getString('name') ?? 'Не вказано';
       email = prefs.getString('email') ?? 'Не вказано';
@@ -32,34 +32,40 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-Future<void> _logout(BuildContext context) async {
-  final navigator = Navigator.of(context);
-  final authCubit = context.read<AuthCubit>();
+  Future<void> _logout() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Вийти з акаунту'),
+        content: const Text('Ви впевнені, що хочете вийти?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Скасувати'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Вийти'),
+          ),
+        ],
+      ),
+    );
 
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Вийти з акаунту'),
-      content: const Text('Ви впевнені, що хочете вийти?'),
-      actions: [
-        TextButton(
-          onPressed: () => navigator.pop(false),
-          child: const Text('Скасувати'),
-        ),
-        TextButton(
-          onPressed: () => navigator.pop(true),
-          child: const Text('Вийти'),
-        ),
-      ],
-    ),
-  );
+    if (confirm != true || !mounted) return;
 
-  if (confirm == true) {
-    authCubit.logOut();
-    navigator.pushNamedAndRemoveUntil('/', (route) => false);
+    try {
+      await context.read<AuthCubit>().logOut();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не вдалося вийти з облікового запису')),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -88,17 +94,15 @@ Future<void> _logout(BuildContext context) async {
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
+                onPressed: () => setState(
+                  () => _isPasswordVisible = !_isPasswordVisible,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => _logout(context),
+            onPressed: _logout,
             child: const Text('Вийти з акаунту'),
           ),
         ],
