@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_project/cubit/auth_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -19,7 +21,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _loadUserData();
-    _loadProfiles();
   }
 
   Future<void> _loadUserData() async {
@@ -31,48 +32,34 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  Future<void> _loadProfiles() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((key) => key.startsWith('profile_'));
-    setState(() {
-      profiles = keys.map((key) {
-        final data = prefs.getStringList(key) ?? [];
-        return {
-          'name': data.isNotEmpty ? data[0] : 'Не вказано',
-          'email': data.length > 1 ? data[1] : 'Не вказано',
-          'key': key,
-        };
-      }).toList();
-    });
+Future<void> _logout(BuildContext context) async {
+  final navigator = Navigator.of(context);
+  final authCubit = context.read<AuthCubit>();
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Вийти з акаунту'),
+      content: const Text('Ви впевнені, що хочете вийти?'),
+      actions: [
+        TextButton(
+          onPressed: () => navigator.pop(false),
+          child: const Text('Скасувати'),
+        ),
+        TextButton(
+          onPressed: () => navigator.pop(true),
+          child: const Text('Вийти'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm == true) {
+    authCubit.logOut();
+    navigator.pushNamedAndRemoveUntil('/', (route) => false);
   }
+}
 
-  Future<void> _logout(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Вийти з акаунту'),
-        content: const Text('Ви впевнені, що хочете вийти?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Скасувати'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Вийти'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', false);
-
-      if (!context.mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +96,12 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () => _logout(context),
-          child: const Text('Вийти з акаунту'),
-        ),
-       ],
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _logout(context),
+            child: const Text('Вийти з акаунту'),
+          ),
+        ],
       ),
     );
   }

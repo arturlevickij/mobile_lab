@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_project/cubit/auth_cubit.dart';
 import 'package:my_project/widgets/custom_button.dart';
 import 'package:my_project/widgets/validated_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +13,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
+  final emailController    = TextEditingController();
   final passwordController = TextEditingController();
 
   String? emailError;
@@ -27,43 +29,39 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _validateInputs() {
     setState(() {
-      emailError = 
+      emailError   = 
       ValidatedTextField.validateEmail(emailController.text.trim());
-      passwordError = 
+      passwordError= 
       ValidatedTextField.validatePassword(passwordController.text.trim());
-      loginError = null;
+      loginError   = null;
     });
-
     return emailError == null && passwordError == null;
   }
 
-Future<void> _attemptLogin() async {
-  if (!_validateInputs()) return;
+  Future<void> _attemptLogin() async {
+    if (!_validateInputs()) return;
 
-  final prefs = await SharedPreferences.getInstance();
-  final storedEmail = prefs.getString('email');
-  final storedPassword = prefs.getString('password');
+    // ───► Беремо все потрібне з context ДО перших await
+    final authCubit = context.read<AuthCubit>();
+    final navigator = Navigator.of(context);
 
-  if (storedEmail == null || storedPassword == null) {
-    if (!mounted) return;
-    setState(() {
-      loginError = 'Користувач не зареєстрований';
-    });
-    return;
+    final prefs          = await SharedPreferences.getInstance();
+    final storedEmail    = prefs.getString('email');
+    final storedPassword = prefs.getString('password');
+
+    if (storedEmail == null || storedPassword == null) {
+      setState(() => loginError = 'Користувач не зареєстрований');
+      return;
+    }
+
+    if (storedEmail == emailController.text.trim() &&
+        storedPassword == passwordController.text.trim()) {
+      await authCubit.logIn();
+      navigator.pushReplacementNamed('/');
+    } else {
+      setState(() => loginError = 'Неправильний email або пароль');
+    }
   }
-
-  if (storedEmail == emailController.text.trim() &&
-      storedPassword == passwordController.text.trim()) {
-    await prefs.setBool('isLoggedIn', true);
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/home');
-  } else {
-    if (!mounted) return;
-    setState(() {
-      loginError = 'Неправильний email або пароль';
-    });
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -91,16 +89,10 @@ Future<void> _attemptLogin() async {
             ),
             if (loginError != null) ...[
               const SizedBox(height: 8),
-              Text(
-                loginError ?? '',
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(loginError!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 16),
-            CustomButton(
-              text: 'Увійти',
-              onPressed: _attemptLogin,
-            ),
+            CustomButton(text: 'Увійти', onPressed: _attemptLogin),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
